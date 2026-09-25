@@ -66,3 +66,45 @@ print(cvd_missingness_methods_within_MI_unc_test_regression)
 print(cvd_missingness_methods_within_MI_unc_test_tests)
 
 
+# Generate figures -------------------------------------------------------------
+print("Generate figures")
+
+
+# Save results -----------------------------------------------------------------
+print("Save results")
+
+write.csv(
+  cvd_missingness_methods_within_MI_all_aggregate_var_selection,
+  "temp/cvd_missingness_methods_within_MI_all_aggregate_var_selection.csv",
+  row.names = FALSE
+)
+
+write.csv(
+  cvd_missingness_methods_within_MI_all_mean_var_selection,
+  "temp/cvd_missingness_methods_within_MI_all_mean_var_selection.csv",
+  row.names = FALSE
+)
+
+write.csv(
+  cvd_missingness_methods_within_MI_all_cox,
+  "temp/cvd_missingness_methods_within_MI_all_cox.csv",
+  row.names = FALSE
+)
+
+write.csv(
+  cvd_missingness_methods_within_MI_unc_test_conclusion,
+  "temp/cvd_missingness_methods_within_MI_unc_test_conclusion.csv",
+  row.names = FALSE
+)
+
+write.csv(
+  cvd_missingness_methods_within_MI_unc_test_regression,
+  "temp/cvd_missingness_methods_within_MI_unc_test_regression.csv",
+  row.names = FALSE
+)
+
+write.csv(
+  cvd_missingness_methods_within_MI_unc_test_tests,
+  "temp/cvd_missingness_methods_within_MI_unc_test_tests.csv",
+  row.names = FALSE
+)
