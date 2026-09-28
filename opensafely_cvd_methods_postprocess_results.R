@@ -237,6 +237,7 @@ fully_adjusted_main_ami_exposure <- fully_adjusted_main_ami_exposure %>%
 fully_adjusted_sub_covidhospital_ami_exposure <- fully_adjusted_sub_covidhospital %>%
   dplyr::filter(model == "mdl_max_adj") %>%
   dplyr::filter(term %in% day_terms) %>%
+  dplyr::filter(outcome == "ami") %>%
   arrange(sapply(term, function(y) which(y == day_terms)))
 
 fully_adjusted_sub_covidhospital_ami_exposure["method"] <- "fully_adjusted"
@@ -250,6 +251,7 @@ fully_adjusted_sub_covidhospital_ami_exposure <- fully_adjusted_sub_covidhospita
 lasso_main_ami_exposure <- lasso_main %>%
   dplyr::filter(model == "mdl_max_adj") %>%
   dplyr::filter(term %in% day_terms) %>%
+  dplyr::filter(outcome == "ami") %>%
   arrange(sapply(term, function(y) which(y == day_terms)))
 
 lasso_main_ami_exposure["method"] <- "lasso"
@@ -260,6 +262,7 @@ lasso_main_ami_exposure <- lasso_main_ami_exposure %>%
 lasso_sub_covidhospital_ami_exposure <- lasso_sub_covidhospital %>%
   dplyr::filter(model == "mdl_max_adj") %>%
   dplyr::filter(term %in% day_terms) %>%
+  dplyr::filter(outcome == "ami") %>%
   arrange(sapply(term, function(y) which(y == day_terms)))
 
 lasso_sub_covidhospital_ami_exposure["method"] <- "lasso"
@@ -273,6 +276,7 @@ lasso_sub_covidhospital_ami_exposure <- lasso_sub_covidhospital_ami_exposure %>%
 lasso_X_main_ami_exposure <- lasso_X_main %>%
   dplyr::filter(model == "mdl_max_adj") %>%
   dplyr::filter(term %in% day_terms) %>%
+  dplyr::filter(outcome == "ami") %>%
   arrange(sapply(term, function(y) which(y == day_terms)))
 
 lasso_X_main_ami_exposure["method"] <- "lasso_X"
@@ -283,6 +287,7 @@ lasso_X_main_ami_exposure <- lasso_X_main_ami_exposure %>%
 lasso_X_sub_covidhospital_ami_exposure <- lasso_X_sub_covidhospital %>%
   dplyr::filter(model == "mdl_max_adj") %>%
   dplyr::filter(term %in% day_terms) %>%
+  dplyr::filter(outcome == "ami") %>%
   arrange(sapply(term, function(y) which(y == day_terms)))
 
 lasso_X_sub_covidhospital_ami_exposure["method"] <- "lasso_X"
@@ -327,6 +332,7 @@ fully_adjusted_main_stroke_sahhs_exposure <- fully_adjusted_main_stroke_sahhs_ex
 fully_adjusted_sub_covidhospital_stroke_sahhs_exposure <- fully_adjusted_sub_covidhospital %>%
   dplyr::filter(model == "mdl_max_adj") %>%
   dplyr::filter(term %in% day_terms) %>%
+  dplyr::filter(outcome == "stroke_sahhs") %>%
   arrange(sapply(term, function(y) which(y == day_terms)))
 
 fully_adjusted_sub_covidhospital_stroke_sahhs_exposure["method"] <- "fully_adjusted"
@@ -340,6 +346,7 @@ fully_adjusted_sub_covidhospital_stroke_sahhs_exposure <- fully_adjusted_sub_cov
 lasso_main_stroke_sahhs_exposure <- lasso_main %>%
   dplyr::filter(model == "mdl_max_adj") %>%
   dplyr::filter(term %in% day_terms) %>%
+  dplyr::filter(outcome == "stroke_sahhs") %>%
   arrange(sapply(term, function(y) which(y == day_terms)))
 
 lasso_main_stroke_sahhs_exposure["method"] <- "lasso"
@@ -350,6 +357,7 @@ lasso_main_stroke_sahhs_exposure <- lasso_main_stroke_sahhs_exposure %>%
 lasso_sub_covidhospital_stroke_sahhs_exposure <- lasso_sub_covidhospital %>%
   dplyr::filter(model == "mdl_max_adj") %>%
   dplyr::filter(term %in% day_terms) %>%
+  dplyr::filter(outcome == "stroke_sahhs") %>%
   arrange(sapply(term, function(y) which(y == day_terms)))
 
 lasso_sub_covidhospital_stroke_sahhs_exposure["method"] <- "lasso"
@@ -363,6 +371,7 @@ lasso_sub_covidhospital_stroke_sahhs_exposure <- lasso_sub_covidhospital_stroke_
 lasso_X_main_stroke_sahhs_exposure <- lasso_X_main %>%
   dplyr::filter(model == "mdl_max_adj") %>%
   dplyr::filter(term %in% day_terms) %>%
+  dplyr::filter(outcome == "stroke_sahhs") %>%
   arrange(sapply(term, function(y) which(y == day_terms)))
 
 lasso_X_main_stroke_sahhs_exposure["method"] <- "lasso_X"
@@ -373,6 +382,7 @@ lasso_X_main_stroke_sahhs_exposure <- lasso_X_main_stroke_sahhs_exposure %>%
 lasso_X_sub_covidhospital_stroke_sahhs_exposure <- lasso_X_sub_covidhospital %>%
   dplyr::filter(model == "mdl_max_adj") %>%
   dplyr::filter(term %in% day_terms) %>%
+  dplyr::filter(outcome == "stroke_sahhs") %>%
   arrange(sapply(term, function(y) which(y == day_terms)))
 
 lasso_X_sub_covidhospital_stroke_sahhs_exposure["method"] <- "lasso_X"
