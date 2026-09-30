@@ -651,6 +651,65 @@ exposure_coefs_stroke_sahhs_all_models <- rbind(
 print(exposure_coefs_stroke_sahhs_all_models)
 
 
+# Remove "cohort_prevax_" from all name columns --------------------------------
+print("Remove \"cohort_prevax_\" from all name columns")
+
+fix_names <- function(column) {
+  for (i in c(1:length(column))) {
+    print(column[, i])
+    # column[, i] <- str_remove(column[, i], "cohort_prevax-")
+  }
+  return (column)
+}
+
+remove_outcome <- function(column) {
+  for (i in c(1:length(column))) {
+    column[, i] <- str_remove(column[, i], "-ami")
+    column[, i] <- str_remove(column[, i], "-stroke_sahhs")
+  }
+  return (column)
+}
+
+fix_variable_names <- function(column) {
+  var_names <- c(
+    "cov_bin_sahhs", "cov_bin_covid", "cov_num_age", "cov_cat_sex", "cov_cat_ethnicity",
+    "cov_cat_imd", "cov_cat_smoking", "cov_bin_carehome", "cov_bin_hcworker", "cov_bin_dementia",
+    "cov_bin_liver_disease", "cov_bin_ckd", "cov_bin_cancer", "cov_bin_hypertension", "cov_bin_diabetes",
+    "cov_bin_obesity", "cov_bin_copd", "cov_bin_depression", "cov_bin_stroke_all", "cov_bin_other_ae",
+    "cov_bin_vte", "cov_bin_hf", "cov_bin_angina", "cov_bin_lipidmed", "cov_bin_antiplatelet",
+    "cov_bin_anticoagulant", "cov_bin_cocp", "cov_bin_hrt", "strat_cat_region"
+  )
+  
+  readable_var_names <- c(
+    "SAHHS", "Covid-19", "Age", "Sex", "Ethnicity",
+    "Index of multiple deprivation", "Smoking", "Carehome resident", "Healthcare worker", "Dementia",
+    "Liver disease", "Chronic kidnery disease", "Cancer", "Hypertension", "Diabetes",
+    "Obesity", "COPD", "Depression", "Stroke (all)", "Other AE",
+    "VTE", "HF", "Angina", "Lipid Med", "Antiplatelet Med",
+    "Anticoagulant Med", "Combined oral contraceptive pill (COCP)", "Hormone replacement therapy (HRT)", "Region"
+  )
+  
+  for (i in c(1:length(column))) {
+    if (column[, i] %in% var_names) {
+      j <- which(var_names == column[, i])
+      column[, i] <- readable_var_names[j]
+    }
+  }
+  
+  return(column)
+}
+
+table1["Characteristic"] <- fix_variable_names(table1["Characteristic"])
+
+exposure_coefs_ami_all_models["name"] <- fix_names(exposure_coefs_ami_all_models["name"])
+# exposure_coefs_ami_all_models["name"] <- remove_outcome(exposure_coefs_ami_all_models["name"])
+# 
+# exposure_coefs_stroke_sahhs_all_models["name"] <- fix_names(exposure_coefs_stroke_sahhs_all_models["name"])
+# exposure_coefs_stroke_sahhs_all_models["name"] <- remove_outcome(exposure_coefs_stroke_sahhs_all_models["name"])
+
+print(exposure_coefs_ami_all_models)
+stop("TODO: FIX")
+
 # Generate figures -------------------------------------------------------------
 print("Generate figures")
 
@@ -692,12 +751,12 @@ write.csv(
   row.names = FALSE
 )
 write.csv(
-  unc_test_conclusion,
+  unc_test_regression,
   "temp/cvd_methods_unc_test_regression.csv",
   row.names = FALSE
 )
 write.csv(
-  unc_test_conclusion,
+  unc_test_tests,
   "temp/cvd_methods_unc_test_tests.csv",
   row.names = FALSE
 )
