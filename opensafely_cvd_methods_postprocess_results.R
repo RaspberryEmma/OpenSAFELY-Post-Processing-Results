@@ -996,6 +996,20 @@ stacked_variable_sets_stroke_sahhs <- stacked_variable_sets %>%
   dplyr::filter(outcome == "Subarachnoid haemorrhage / haemorrhage stroke") %>%
   dplyr::select(name, method, available_vars, selected_vars, vars_list)
 
+unc_test_conclusion["outcome"]   <- unc_test_conclusion["name"]
+unc_test_conclusion["name"]      <- fix_names(unc_test_conclusion["name"])
+unc_test_conclusion["name"]      <- remove_outcome(unc_test_conclusion["name"])
+unc_test_conclusion["name"]      <- fix_subgroup_names(unc_test_conclusion["name"])
+unc_test_conclusion["method"]    <- fix_method_names(unc_test_conclusion["method"])
+unc_test_conclusion["outcome"]   <- isolate_outcome(unc_test_conclusion["outcome"])
+
+unc_test_conclusion <- unc_test_conclusion %>%
+  dplyr::select(outcome, name, method, test_result, interpretation)
+
+
+print(unc_test_regression)
+stop("TODO: FIX")
+
 
 # Generate figures -------------------------------------------------------------
 print("Generate figures")
