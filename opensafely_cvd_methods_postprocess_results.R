@@ -655,23 +655,189 @@ print(exposure_coefs_stroke_sahhs_all_models)
 print("Remove \"cohort_prevax_\" from all name columns")
 
 fix_names <- function(column) {
-  for (i in c(1:length(column))) {
-    print(column[, i])
-    # column[, i] <- str_remove(column[, i], "cohort_prevax-")
+  for (i in c(1:nrow(column))) {
+    column[i, ] <- str_remove(column[i, ], "cohort_prevax-")
   }
   return (column)
 }
 
 remove_outcome <- function(column) {
-  for (i in c(1:length(column))) {
-    column[, i] <- str_remove(column[, i], "-ami")
-    column[, i] <- str_remove(column[, i], "-stroke_sahhs")
+  for (i in c(1:nrow(column))) {
+    column[i, ] <- str_remove(column[i, ], "-ami")
+    column[i, ] <- str_remove(column[i, ], "-stroke_sahhs")
   }
   return (column)
 }
 
+isolate_outcome <- function(column) {
+  for (i in c(1:nrow(column))) {
+    if (grepl("ami", column[i, ], fixed = TRUE)) {
+      column[i, ] <- "Acute MI"
+    }
+    else {
+      column[i, ] <- "Subarachnoid haemorrhage / haemorrhage stroke"
+    }
+  }
+  return (column)
+}
+
+replace_TRUE_with_dash <- function(column) {
+  for (i in c(1:nrow(column))) {
+    if (str_detect(column[i, ], "TRUE")) {
+      column[i, ] <- "-"
+    }
+  }
+  return (column)
+}
+
+table1_reorder_rows <- function(table) {
+  
+  table$char_and_subchar <- paste(
+    table$Characteristic,
+    table$Subcharacteristic,
+    sep = "_"
+  )
+  
+  table$char_and_subchar <- gsub(
+    "\\s", "", table$char_and_subchar
+  )
+  
+  order_characteristics <- c(
+    "All_All",
+    
+    "Sex_Female",
+    "Sex_Male",
+    
+    "Age_18-29",
+    "Age_30-39",
+    "Age_40-49",
+    "Age_50-59",
+    "Age_60-69",
+    "Age_70-79",
+    "Age_80-89",
+    "Age_90+",
+    "Age,years_Median(IQR)",
+    
+    "Ethnicity_Asian",
+    "Ethnicity_Black",
+    "Ethnicity_Missing",
+    "Ethnicity_Mixed",
+    "Ethnicity_Other",
+    "Ethnicity_White",
+    
+    "Indexofmultipledeprivation_1(mostdeprived)",
+    "Indexofmultipledeprivation_2",
+    "Indexofmultipledeprivation_3",
+    "Indexofmultipledeprivation_4",
+    "Indexofmultipledeprivation_5(leastdeprived)",
+    
+    "Smoking_Currentsmoker",
+    "Smoking_Eversmoker",
+    "Smoking_Missing",
+    "Smoking_Neversmoker",
+    
+    "Region_East",
+    "Region_EastMidlands",
+    "Region_London",
+    "Region_NorthEast",
+    "Region_NorthWest",
+    "Region_SouthEast",
+    "Region_SouthWest",
+    "Region_WestMidlands",
+    "Region_YorkshireandTheHumber",
+    
+    "Carehomeresident_-",
+    "Healthcareworker_-",
+    
+    "AcuteMI_-",
+    "Angina_-",
+    "Cancer_-",
+    "Chronickidnerydisease_-",
+    "Chronicobstructivepulmonarydisease(COPD)_-",
+    "Covid-19_-",
+    "Dementia_-",
+    "Depression_-",
+    "Diabetes_-",
+    "HF_-",
+    "Hypertension_-",
+    "Liverdisease_-",
+    "Obesity_-",
+    "OtherAE_-",
+    "Subarachnoidhaemorrhage/haemorrhagestroke_-",
+    "Stroke(all)_-",
+    "Venousthromboembolismevents(VTE)_-",
+    
+    "AnticoagulantMed_-",
+    "AntiplateletMed_-",
+    "Combinedoralcontraceptivepill(COCP)_-",
+    "Hormonereplacementtherapy(HRT)_-",
+    "LipidMed_-"
+    
+  )
+  
+  table <- (table %>%
+    mutate(char_and_subchar =  factor(char_and_subchar, levels = order_characteristics)) %>%
+    arrange(char_and_subchar) %>%
+    select(-one_of("char_and_subchar"))
+  )
+  
+  return (table)
+}
+
+fix_subgroup_names <- function(column) {
+  subgroup_names <- c(
+    "main", "sub_covidhospital_FALSE", "sub_covidhospital_TRUE"
+  )
+  
+  readable_subgroup_names <- c(
+    "All", "Non-hospitalised COVID-19", "Hospitalised COVID-19"
+  )
+  
+  for (i in c(1:nrow(column))) {
+    if (column[i, ] %in% subgroup_names) {
+      j <- which(subgroup_names == column[i, ])
+      column[i, ] <- readable_subgroup_names[j]
+    }
+  }
+  
+  return (column)
+}
+
+exposure_coef_table_reorder_rows <- function(table) {
+  table$name_and_method <- paste(
+    table$name,
+    table$method,
+    sep = "_"
+  )
+  
+  table$name_and_method <- gsub(
+    "\\s", "", table$name_and_method
+  )
+  
+  order <- c(
+    "All_FullyAdjusted",
+    "Non-hospitalisedCOVID-19_FullyAdjusted",
+    "HospitalisedCOVID-19_FullyAdjusted",
+    "All_Lasso",
+    "Non-hospitalisedCOVID-19_Lasso",
+    "HospitalisedCOVID-19_Lasso",
+    "All_ExposureLasso",
+    "Non-hospitalisedCOVID-19_ExposureLasso",
+    "HospitalisedCOVID-19_ExposureLasso"
+  )
+  
+  table <- (table %>%
+    mutate(name_and_method =  factor(name_and_method, levels = order)) %>%
+    arrange(name_and_method) %>%
+    select(-one_of("name_and_method"))
+  )
+  
+  return(table)
+}
+
 fix_variable_names <- function(column) {
   var_names <- c(
+    "cov_bin_ami", "cov_cat_age_group",
     "cov_bin_sahhs", "cov_bin_covid", "cov_num_age", "cov_cat_sex", "cov_cat_ethnicity",
     "cov_cat_imd", "cov_cat_smoking", "cov_bin_carehome", "cov_bin_hcworker", "cov_bin_dementia",
     "cov_bin_liver_disease", "cov_bin_ckd", "cov_bin_cancer", "cov_bin_hypertension", "cov_bin_diabetes",
@@ -681,34 +847,155 @@ fix_variable_names <- function(column) {
   )
   
   readable_var_names <- c(
-    "SAHHS", "Covid-19", "Age", "Sex", "Ethnicity",
+    "Acute MI", "Age",
+    "Subarachnoid haemorrhage / haemorrhage stroke", "Covid-19", "Age", "Sex", "Ethnicity",
     "Index of multiple deprivation", "Smoking", "Carehome resident", "Healthcare worker", "Dementia",
-    "Liver disease", "Chronic kidnery disease", "Cancer", "Hypertension", "Diabetes",
-    "Obesity", "COPD", "Depression", "Stroke (all)", "Other AE",
-    "VTE", "HF", "Angina", "Lipid Med", "Antiplatelet Med",
+    "Liver disease", "Chronic kidney disease", "Cancer", "Hypertension", "Diabetes",
+    "Obesity", "Chronic obstructive pulmonary disease (COPD)", "Depression", "Stroke (all)", "Other AE",
+    "Venous thromboembolism events (VTE)", "HF", "Angina", "Lipid Med", "Antiplatelet Med",
     "Anticoagulant Med", "Combined oral contraceptive pill (COCP)", "Hormone replacement therapy (HRT)", "Region"
   )
   
-  for (i in c(1:length(column))) {
-    if (column[, i] %in% var_names) {
-      j <- which(var_names == column[, i])
-      column[, i] <- readable_var_names[j]
+  for (i in c(1:nrow(column))) {
+    if (column[i, ] %in% var_names) {
+      j <- which(var_names == column[i, ])
+      column[i, ] <- readable_var_names[j]
     }
   }
   
   return(column)
 }
 
-table1["Characteristic"] <- fix_variable_names(table1["Characteristic"])
+fix_vars_list <- function(column) {
+  var_names <- c(
+    "cov_bin_ami", "cov_cat_age_group",
+    "cov_bin_sahhs", "cov_bin_covid", "cov_num_age", "cov_cat_sex", "cov_cat_ethnicity",
+    "cov_cat_imd", "cov_cat_smoking", "cov_bin_carehome", "cov_bin_hcworker", "cov_bin_dementia",
+    "cov_bin_liver_disease", "cov_bin_ckd", "cov_bin_cancer", "cov_bin_hypertension", "cov_bin_diabetes",
+    "cov_bin_obesity", "cov_bin_copd", "cov_bin_depression", "cov_bin_stroke_all", "cov_bin_other_ae",
+    "cov_bin_vte", "cov_bin_hf", "cov_bin_angina", "cov_bin_lipidmed", "cov_bin_antiplatelet",
+    "cov_bin_anticoagulant", "cov_bin_cocp", "cov_bin_hrt", "strat_cat_region",
+    "end_date_exposure", "binary_covid19_exposure"
+  )
+  
+  readable_var_names <- c(
+    "Acute MI", "Age",
+    "Subarachnoid haemorrhage / haemorrhage stroke", "Covid-19", "Age", "Sex", "Ethnicity",
+    "Index of multiple deprivation", "Smoking", "Carehome resident", "Healthcare worker", "Dementia",
+    "Liver disease", "Chronic kidney disease", "Cancer", "Hypertension", "Diabetes",
+    "Obesity", "Chronic obstructive pulmonary disease (COPD)", "Depression", "Stroke (all)", "Other AE",
+    "Venous thromboembolism events (VTE)", "HF", "Angina", "Lipid Med", "Antiplatelet Med",
+    "Anticoagulant Med", "Combined oral contraceptive pill (COCP)", "Hormone replacement therapy (HRT)", "Region",
+    "End Date Exposure", "Exposure Indicator"
+  )
+  
+  for (i in c(1:nrow(column))) {
+    current_vars_list <- str_split(column[i, ], ";")[[1]]
+    
+    for (j in c(1:length(current_vars_list))) {
+      if (current_vars_list[j] %in% var_names) {
+        k <- which(var_names == current_vars_list[j])
+        current_vars_list[j] <- readable_var_names[k]
+      }
+    }
+    
+    readable_vars_list <- paste(current_vars_list, collapse = ", ")
+    column[i, ]        <- readable_vars_list
+  }
+  
+  return(column)
+}
 
-exposure_coefs_ami_all_models["name"] <- fix_names(exposure_coefs_ami_all_models["name"])
-# exposure_coefs_ami_all_models["name"] <- remove_outcome(exposure_coefs_ami_all_models["name"])
-# 
-# exposure_coefs_stroke_sahhs_all_models["name"] <- fix_names(exposure_coefs_stroke_sahhs_all_models["name"])
-# exposure_coefs_stroke_sahhs_all_models["name"] <- remove_outcome(exposure_coefs_stroke_sahhs_all_models["name"])
+fix_method_names <- function(column) {
+  method_names <- c(
+    "fully_adjusted", "Fully-adjusted",
+    "lasso", "Lasso",
+    "lasso_X", "Lasso_X",
+    "Lasso_union"
+  )
+  
+  readable_method_names <- c(
+    "Fully Adjusted", "Fully Adjusted",
+    "Lasso", "Lasso",
+    "Exposure Lasso", "Exposure Lasso",
+    "Union lasso"
+  )
+  
+  for (i in c(1:nrow(column))) {
+    if (column[i, ] %in% method_names) {
+      j <- which(method_names == column[i, ])
+      column[i, ] <- readable_method_names[j]
+    }
+  }
+  
+  return(column)
+}
 
-print(exposure_coefs_ami_all_models)
-stop("TODO: FIX")
+fix_time_names <- function(column) {
+  time_names <- c(
+    "days0_1", "days1_28", "days28_196", "days196_364", "days364_714", "days714_1582"
+  )
+  
+  readable_time_names <- c(
+    "Day 0", "1-4 weeks", "5-28 weeks", "29-52 weeks", "53-102 weeks", "103-204 weeks"
+  )
+  
+  for (i in c(1:nrow(column))) {
+    if (column[i, ] %in% time_names) {
+      j <- which(time_names == column[i, ])
+      column[i, ] <- readable_time_names[j]
+    }
+  }
+  
+  return (column)
+}
+
+round_to_three_sf <- function(column) {
+  for (i in c(1:nrow(column))) {
+    column[i, ] <- signif(column[i, ], digits = 3)
+  }
+  
+  return (column)
+}
+
+table1["Characteristic"]    <- fix_variable_names(table1["Characteristic"])
+table1["Subcharacteristic"] <- replace_TRUE_with_dash(table1["Subcharacteristic"])
+table1                      <- table1_reorder_rows(table1)
+
+exposure_coefs_ami_all_models["name"]    <- fix_names(exposure_coefs_ami_all_models["name"])
+exposure_coefs_ami_all_models["name"]    <- remove_outcome(exposure_coefs_ami_all_models["name"])
+exposure_coefs_ami_all_models["name"]    <- fix_subgroup_names(exposure_coefs_ami_all_models["name"])
+exposure_coefs_ami_all_models["method"]  <- fix_method_names(exposure_coefs_ami_all_models["method"])
+exposure_coefs_ami_all_models["term"]    <- fix_time_names(exposure_coefs_ami_all_models["term"])
+exposure_coefs_ami_all_models["lnhr"]    <- round_to_three_sf(exposure_coefs_ami_all_models["lnhr"])
+exposure_coefs_ami_all_models["se_lnhr"] <- round_to_three_sf(exposure_coefs_ami_all_models["se_lnhr"])
+exposure_coefs_ami_all_models            <- exposure_coef_table_reorder_rows(exposure_coefs_ami_all_models)
+
+exposure_coefs_stroke_sahhs_all_models["name"]    <- fix_names(exposure_coefs_stroke_sahhs_all_models["name"])
+exposure_coefs_stroke_sahhs_all_models["name"]    <- remove_outcome(exposure_coefs_stroke_sahhs_all_models["name"])
+exposure_coefs_stroke_sahhs_all_models["name"]    <- fix_subgroup_names(exposure_coefs_stroke_sahhs_all_models["name"])
+exposure_coefs_stroke_sahhs_all_models["method"]  <- fix_method_names(exposure_coefs_stroke_sahhs_all_models["method"])
+exposure_coefs_stroke_sahhs_all_models["term"]    <- fix_time_names(exposure_coefs_stroke_sahhs_all_models["term"])
+exposure_coefs_stroke_sahhs_all_models["lnhr"]    <- round_to_three_sf(exposure_coefs_stroke_sahhs_all_models["lnhr"])
+exposure_coefs_stroke_sahhs_all_models["se_lnhr"] <- round_to_three_sf(exposure_coefs_stroke_sahhs_all_models["se_lnhr"])
+exposure_coefs_stroke_sahhs_all_models            <- exposure_coef_table_reorder_rows(exposure_coefs_stroke_sahhs_all_models)
+
+stacked_variable_sets["outcome"]   <- stacked_variable_sets["name"]
+stacked_variable_sets["name"]      <- fix_names(stacked_variable_sets["name"])
+stacked_variable_sets["name"]      <- remove_outcome(stacked_variable_sets["name"])
+stacked_variable_sets["name"]      <- fix_subgroup_names(stacked_variable_sets["name"])
+stacked_variable_sets["method"]    <- fix_method_names(stacked_variable_sets["method"])
+stacked_variable_sets["outcome"]   <- isolate_outcome(stacked_variable_sets["outcome"])
+stacked_variable_sets["vars_list"] <- fix_vars_list(stacked_variable_sets["vars_list"])
+
+stacked_variable_sets_ami <- stacked_variable_sets %>%
+  dplyr::filter(outcome == "Acute MI") %>%
+  dplyr::select(name, method, available_vars, selected_vars, vars_list)
+
+stacked_variable_sets_stroke_sahhs <- stacked_variable_sets %>%
+  dplyr::filter(outcome == "Subarachnoid haemorrhage / haemorrhage stroke") %>%
+  dplyr::select(name, method, available_vars, selected_vars, vars_list)
+
 
 # Generate figures -------------------------------------------------------------
 print("Generate figures")
@@ -777,8 +1064,13 @@ write.csv(
 
 # variable sets
 write.csv(
-  stacked_variable_sets,
-  "temp/cvd_methods_stacked_variable_sets.csv",
+  stacked_variable_sets_ami,
+  "temp/cvd_methods_stacked_variable_sets_ami.csv",
+  row.names = FALSE
+)
+write.csv(
+  stacked_variable_sets_stroke_sahhs,
+  "temp/cvd_methods_stacked_variable_sets_stroke_sahhs.csv",
   row.names = FALSE
 )
 

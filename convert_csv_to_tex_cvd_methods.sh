@@ -6,8 +6,9 @@ python tably.py "temp/cvd_methods_exposure_coefs_ami_all_models.csv"          -o
 python tably.py "temp/cvd_methods_exposure_coefs_stroke_sahhs_all_models.csv" -o "outputs/cvd_methods_exposure_coefs_stroke_sahhs_all_models.txt" -r
 
 python tably.py "temp/cvd_methods_stacked_fully_adjusted_var_sel_models.csv" -o "outputs/cvd_methods_stacked_fully_adjusted_var_sel_models.txt" -r
-python tably.py "temp/cvd_methods_stacked_var_sel_models.csv" -o "outputs/cvd_methods_stacked_var_sel_models.txt" -r
-python tably.py "temp/cvd_methods_stacked_variable_sets.csv" -o "outputs/cvd_methods_stacked_variable_sets.txt" -r
+python tably.py "temp/cvd_methods_stacked_var_sel_models.csv"                -o "outputs/cvd_methods_stacked_var_sel_models.txt" -r
+python tably.py "temp/cvd_methods_stacked_variable_sets_ami.csv"             -o "outputs/cvd_methods_stacked_variable_sets_ami.txt" -r
+python tably.py "temp/cvd_methods_stacked_variable_sets_stroke_sahhs.csv"    -o "outputs/cvd_methods_stacked_variable_sets_stroke_sahhs.txt" -r
 
 python tably.py "temp/cvd_methods_table1.csv" -o "outputs/cvd_methods_table1.txt" -r
 python tably.py "temp/cvd_methods_table2.csv" -o "outputs/cvd_methods_table2.txt" -r
@@ -23,7 +24,8 @@ sed -i 1,4d "outputs/cvd_methods_exposure_coefs_stroke_sahhs_all_models.txt"
 
 sed -i 1,4d "outputs/cvd_methods_stacked_fully_adjusted_var_sel_models.txt"
 sed -i 1,4d "outputs/cvd_methods_stacked_var_sel_models.txt"
-sed -i 1,4d "outputs/cvd_methods_stacked_variable_sets.txt"
+sed -i 1,4d "outputs/cvd_methods_stacked_variable_sets_ami.txt"
+sed -i 1,4d "outputs/cvd_methods_stacked_variable_sets_stroke_sahhs.txt"
 
 sed -i 1,4d "outputs/cvd_methods_table1.txt"
 sed -i 1,4d "outputs/cvd_methods_table2.txt"
@@ -33,7 +35,7 @@ sed -i 1,4d "outputs/cvd_methods_unc_test_regression.txt"
 sed -i 1,4d "outputs/cvd_methods_unc_test_tests.txt"
 
 
-# # remove last 2 lines (tably footer)
+# remove last 2 lines (tably footer)
 sed -i '$d' "outputs/cvd_methods_exposure_coefs_ami_all_models.txt"
 sed -i '$d' "outputs/cvd_methods_exposure_coefs_ami_all_models.txt"
 sed -i '$d' "outputs/cvd_methods_exposure_coefs_stroke_sahhs_all_models.txt"
@@ -43,8 +45,10 @@ sed -i '$d' "outputs/cvd_methods_stacked_fully_adjusted_var_sel_models.txt"
 sed -i '$d' "outputs/cvd_methods_stacked_fully_adjusted_var_sel_models.txt"
 sed -i '$d' "outputs/cvd_methods_stacked_var_sel_models.txt"
 sed -i '$d' "outputs/cvd_methods_stacked_var_sel_models.txt"
-sed -i '$d' "outputs/cvd_methods_stacked_variable_sets.txt"
-sed -i '$d' "outputs/cvd_methods_stacked_variable_sets.txt"
+sed -i '$d' "outputs/cvd_methods_stacked_variable_sets_ami.txt"
+sed -i '$d' "outputs/cvd_methods_stacked_variable_sets_ami.txt"
+sed -i '$d' "outputs/cvd_methods_stacked_variable_sets_stroke_sahhs.txt"
+sed -i '$d' "outputs/cvd_methods_stacked_variable_sets_stroke_sahhs.txt"
 
 sed -i '$d' "outputs/cvd_methods_table1.txt"
 sed -i '$d' "outputs/cvd_methods_table1.txt"
@@ -57,3 +61,4 @@ sed -i '$d' "outputs/cvd_methods_unc_test_regression.txt"
 sed -i '$d' "outputs/cvd_methods_unc_test_regression.txt"
 sed -i '$d' "outputs/cvd_methods_unc_test_tests.txt"
 sed -i '$d' "outputs/cvd_methods_unc_test_tests.txt"
+
