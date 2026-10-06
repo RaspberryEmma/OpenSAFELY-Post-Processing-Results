@@ -866,6 +866,124 @@ fix_variable_names <- function(column) {
   return(column)
 }
 
+fix_variable_with_level_names <- function(column) {
+  var_names <- c(
+    "(Intercept)",
+    "cov_bin_sahhsTRUE",
+    "cov_num_age",
+    "cov_cat_sexMale",
+    "cov_cat_ethnicityAsian",
+    "cov_cat_ethnicityBlack",
+    "cov_cat_ethnicityMissing",
+    "cov_cat_ethnicityMixed",
+    "cov_cat_ethnicityOther",
+    "cov_cat_imd.L",
+    "cov_cat_imd.Q",
+    "cov_cat_imd.C",
+    "cov_cat_imd^4",
+    "cov_cat_smoking.L",
+    "cov_cat_smoking.Q",
+    "cov_cat_smoking.C",
+    "cov_bin_carehomeTRUE",
+    "cov_bin_hcworkerTRUE",
+    "cov_bin_dementiaTRUE",
+    "cov_bin_liver_diseaseTRUE",
+    "cov_bin_ckdTRUE",
+    "cov_bin_cancerTRUE",
+    "cov_bin_hypertensionTRUE",
+    "cov_bin_diabetesTRUE",
+    "cov_bin_obesityTRUE",
+    "cov_bin_copdTRUE",
+    "cov_bin_depressionTRUE",
+    "cov_bin_stroke_allTRUE",
+    "cov_bin_other_aeTRUE",
+    "cov_bin_vteTRUE",
+    "cov_bin_hfTRUE",
+    "cov_bin_anginaTRUE",
+    "cov_bin_lipidmedTRUE",
+    "cov_bin_antiplateletTRUE",
+    "cov_bin_anticoagulantTRUE",
+    "cov_bin_cocpTRUE",
+    "cov_bin_hrtTRUE",
+    "strat_cat_regionEast Midlands",
+    "strat_cat_regionLondon",
+    "strat_cat_regionNorth East",
+    "strat_cat_regionNorth West",
+    "strat_cat_regionSouth East",
+    "strat_cat_regionSouth West",
+    "strat_cat_regionWest Midlands",
+    "strat_cat_regionYorkshire and The Humber",
+    "cov_bin_amiTRUE",
+    "cov_bin_covidTRUE"
+  )
+  
+  readable_var_names <- c(
+    "(Intercept)",
+    "Subarachnoid haemorrhage / haemorrhage stroke",
+    "Age",
+    "Sex (Male)",
+    
+    "Ethnicity (Asian)",
+    "Ethnicity (Black)",
+    "Ethnicity (Missing)",
+    "Ethnicity (Mixed)",
+    "Ethnicity (Other)",
+    
+    "Index of multiple deprivation (L)",
+    "Index of multiple deprivation (Q)",
+    "Index of multiple deprivation (C)",
+    "Index of multiple deprivation (^4)",
+    
+    "Smoking (L)",
+    "Smoking (Q)",
+    "Smoking (C)",
+    
+    "Carehome resident",
+    "Healthcare worker",
+    "Dementia",
+    "Liver disease",
+    "Chronic kidney disease",
+    "Cancer",
+    "Hypertension",
+    "Diabetes",
+    "Obesity",
+    "Chronic obstructive pulmonary disease (COPD)",
+    "Depression",
+    "Stroke (all)",
+    "Other AE",
+    "Venous thromboembolism events (VTE)",
+    "HF",
+    "Angina",
+    "Lipid Med",
+    "Antiplatelet Med",
+    "Anticoagulant Med",
+    "Combined oral contraceptive pill (COCP)",
+    "Hormone replacement therapy (HRT)",
+    
+    "Region (East Midlands)",
+    "Region (London)",
+    "Region (North East)",
+    "Region (North West)",
+    "Region (South East)",
+    "Region (South West)",
+    "Region (West Midlands)",
+    "Region (Yorkshire and The Humber)",
+    
+    "Acute MI",
+    "Covid-19"
+    
+  )
+  
+  for (i in c(1:nrow(column))) {
+    if (column[i, ] %in% var_names) {
+      j <- which(var_names == column[i, ])
+      column[i, ] <- readable_var_names[j]
+    }
+  }
+  
+  return(column)
+}
+
 fix_vars_list <- function(column) {
   var_names <- c(
     "cov_bin_ami", "cov_cat_age_group",
@@ -918,7 +1036,7 @@ fix_method_names <- function(column) {
     "Fully Adjusted", "Fully Adjusted",
     "Lasso", "Lasso",
     "Exposure Lasso", "Exposure Lasso",
-    "Union lasso"
+    "Union Lasso"
   )
   
   for (i in c(1:nrow(column))) {
@@ -1006,9 +1124,127 @@ unc_test_conclusion["outcome"]   <- isolate_outcome(unc_test_conclusion["outcome
 unc_test_conclusion <- unc_test_conclusion %>%
   dplyr::select(outcome, name, method, test_result, interpretation)
 
+unc_test_regression["outcome"]   <- unc_test_regression["name"]
+unc_test_regression["name"]      <- fix_names(unc_test_regression["name"])
+unc_test_regression["name"]      <- remove_outcome(unc_test_regression["name"])
+unc_test_regression["name"]      <- fix_subgroup_names(unc_test_regression["name"])
+unc_test_regression["method"]    <- fix_method_names(unc_test_regression["method"])
+unc_test_regression["outcome"]   <- isolate_outcome(unc_test_regression["outcome"])
+unc_test_regression["estimate"]  <- round_to_three_sf(unc_test_regression["estimate"])
+unc_test_regression["std.error"] <- round_to_three_sf(unc_test_regression["std.error"])
+unc_test_regression["statistic"] <- round_to_three_sf(unc_test_regression["statistic"])
+unc_test_regression["p.value"]   <- round_to_three_sf(unc_test_regression["p.value"])
+unc_test_regression["term"]      <- fix_variable_with_level_names(unc_test_regression["term"])
 
-print(unc_test_regression)
-stop("TODO: FIX")
+unc_test_regression <- unc_test_regression %>%
+  dplyr::select(outcome, name, method, response, term, estimate, std.error, statistic, p.value)
+
+unc_test_regression_ami <- unc_test_regression %>%
+  dplyr::filter(outcome == "Acute MI")
+unc_test_regression_stroke_sahhs <- unc_test_regression %>%
+  dplyr::filter(outcome == "Subarachnoid haemorrhage / haemorrhage stroke")
+
+unc_test_regression_ami_fully_adjusted_all <- unc_test_regression_ami %>%
+  dplyr::filter(method == "Fully Adjusted") %>%
+  dplyr::filter(name == "All") %>%
+  dplyr::select(response, term, estimate, std.error, statistic, p.value)
+unc_test_regression_ami_lasso_all <- unc_test_regression_ami %>%
+  dplyr::filter(method == "Lasso") %>%
+  dplyr::filter(name == "All") %>%
+  dplyr::select(response, term, estimate, std.error, statistic, p.value)
+unc_test_regression_ami_lasso_X_all <- unc_test_regression_ami %>%
+  dplyr::filter(method == "Exposure Lasso") %>%
+  dplyr::filter(name == "All") %>%
+  dplyr::select(response, term, estimate, std.error, statistic, p.value)
+unc_test_regression_ami_lasso_union_all <- unc_test_regression_ami %>%
+  dplyr::filter(method == "Union Lasso") %>%
+  dplyr::filter(name == "All") %>%
+  dplyr::select(response, term, estimate, std.error, statistic, p.value)
+
+unc_test_regression_ami_fully_adjusted_FALSE <- unc_test_regression_ami %>%
+  dplyr::filter(method == "Fully Adjusted") %>%
+  dplyr::filter(name == "Non-hospitalised COVID-19") %>%
+  dplyr::select(response, term, estimate, std.error, statistic, p.value)
+unc_test_regression_ami_lasso_FALSE <- unc_test_regression_ami %>%
+  dplyr::filter(method == "Lasso") %>%
+  dplyr::filter(name == "Non-hospitalised COVID-19") %>%
+  dplyr::select(response, term, estimate, std.error, statistic, p.value)
+unc_test_regression_ami_lasso_X_FALSE <- unc_test_regression_ami %>%
+  dplyr::filter(method == "Exposure Lasso") %>%
+  dplyr::filter(name == "Non-hospitalised COVID-19") %>%
+  dplyr::select(response, term, estimate, std.error, statistic, p.value)
+unc_test_regression_ami_lasso_union_FALSE <- unc_test_regression_ami %>%
+  dplyr::filter(method == "Union Lasso") %>%
+  dplyr::filter(name == "Non-hospitalised COVID-19") %>%
+  dplyr::select(response, term, estimate, std.error, statistic, p.value)
+
+unc_test_regression_ami_fully_adjusted_TRUE <- unc_test_regression_ami %>%
+  dplyr::filter(method == "Fully Adjusted") %>%
+  dplyr::filter(name == "Hospitalised COVID-19") %>%
+  dplyr::select(response, term, estimate, std.error, statistic, p.value)
+unc_test_regression_ami_lasso_TRUE <- unc_test_regression_ami %>%
+  dplyr::filter(method == "Lasso") %>%
+  dplyr::filter(name == "Hospitalised COVID-19") %>%
+  dplyr::select(response, term, estimate, std.error, statistic, p.value)
+unc_test_regression_ami_lasso_X_TRUE <- unc_test_regression_ami %>%
+  dplyr::filter(method == "Exposure Lasso") %>%
+  dplyr::filter(name == "Hospitalised COVID-19") %>%
+  dplyr::select(response, term, estimate, std.error, statistic, p.value)
+unc_test_regression_ami_lasso_union_TRUE <- unc_test_regression_ami %>%
+  dplyr::filter(method == "Union Lasso") %>%
+  dplyr::filter(name == "Hospitalised COVID-19") %>%
+  dplyr::select(response, term, estimate, std.error, statistic, p.value)
+
+unc_test_regression_stroke_sahhs_fully_adjusted_all <- unc_test_regression_stroke_sahhs %>%
+  dplyr::filter(method == "Fully Adjusted") %>%
+  dplyr::filter(name == "All") %>%
+  dplyr::select(response, term, estimate, std.error, statistic, p.value)
+unc_test_regression_stroke_sahhs_lasso_all <- unc_test_regression_stroke_sahhs %>%
+  dplyr::filter(method == "Lasso") %>%
+  dplyr::filter(name == "All") %>%
+  dplyr::select(response, term, estimate, std.error, statistic, p.value)
+unc_test_regression_stroke_sahhs_lasso_X_all <- unc_test_regression_stroke_sahhs %>%
+  dplyr::filter(method == "Exposure Lasso") %>%
+  dplyr::filter(name == "All") %>%
+  dplyr::select(response, term, estimate, std.error, statistic, p.value)
+unc_test_regression_stroke_sahhs_lasso_union_all <- unc_test_regression_stroke_sahhs %>%
+  dplyr::filter(method == "Union Lasso") %>%
+  dplyr::filter(name == "All") %>%
+  dplyr::select(response, term, estimate, std.error, statistic, p.value)
+
+unc_test_regression_stroke_sahhs_fully_adjusted_FALSE <- unc_test_regression_stroke_sahhs %>%
+  dplyr::filter(method == "Fully Adjusted") %>%
+  dplyr::filter(name == "Non-hospitalised COVID-19") %>%
+  dplyr::select(response, term, estimate, std.error, statistic, p.value)
+unc_test_regression_stroke_sahhs_lasso_FALSE <- unc_test_regression_stroke_sahhs %>%
+  dplyr::filter(method == "Lasso") %>%
+  dplyr::filter(name == "Non-hospitalised COVID-19") %>%
+  dplyr::select(response, term, estimate, std.error, statistic, p.value)
+unc_test_regression_stroke_sahhs_lasso_X_FALSE <- unc_test_regression_stroke_sahhs %>%
+  dplyr::filter(method == "Exposure Lasso") %>%
+  dplyr::filter(name == "Non-hospitalised COVID-19") %>%
+  dplyr::select(response, term, estimate, std.error, statistic, p.value)
+unc_test_regression_stroke_sahhs_lasso_union_FALSE <- unc_test_regression_stroke_sahhs %>%
+  dplyr::filter(method == "Union Lasso") %>%
+  dplyr::filter(name == "Non-hospitalised COVID-19") %>%
+  dplyr::select(response, term, estimate, std.error, statistic, p.value)
+
+unc_test_regression_stroke_sahhs_fully_adjusted_TRUE <- unc_test_regression_stroke_sahhs %>%
+  dplyr::filter(method == "Fully Adjusted") %>%
+  dplyr::filter(name == "Hospitalised COVID-19") %>%
+  dplyr::select(response, term, estimate, std.error, statistic, p.value)
+unc_test_regression_stroke_sahhs_lasso_TRUE <- unc_test_regression_stroke_sahhs %>%
+  dplyr::filter(method == "Lasso") %>%
+  dplyr::filter(name == "Hospitalised COVID-19") %>%
+  dplyr::select(response, term, estimate, std.error, statistic, p.value)
+unc_test_regression_stroke_sahhs_lasso_X_TRUE <- unc_test_regression_stroke_sahhs %>%
+  dplyr::filter(method == "Exposure Lasso") %>%
+  dplyr::filter(name == "Hospitalised COVID-19") %>%
+  dplyr::select(response, term, estimate, std.error, statistic, p.value)
+unc_test_regression_stroke_sahhs_lasso_union_TRUE <- unc_test_regression_stroke_sahhs %>%
+  dplyr::filter(method == "Union Lasso") %>%
+  dplyr::filter(name == "Hospitalised COVID-19") %>%
+  dplyr::select(response, term, estimate, std.error, statistic, p.value)
 
 
 # Generate figures -------------------------------------------------------------
@@ -1052,15 +1288,131 @@ write.csv(
   row.names = FALSE
 )
 write.csv(
-  unc_test_regression,
-  "temp/cvd_methods_unc_test_regression.csv",
-  row.names = FALSE
-)
-write.csv(
   unc_test_tests,
   "temp/cvd_methods_unc_test_tests.csv",
   row.names = FALSE
 )
+write.csv(
+  unc_test_regression_ami_fully_adjusted_all,
+  "temp/cvd_methods_unc_test_regression_ami_fully_adjusted_all.csv",
+  row.names = FALSE
+)
+write.csv(
+  unc_test_regression_ami_lasso_all,
+  "temp/cvd_methods_unc_test_regression_ami_lasso_all.csv",
+  row.names = FALSE
+)
+write.csv(
+  unc_test_regression_ami_lasso_X_all,
+  "temp/cvd_methods_unc_test_regression_ami_lasso_X_all.csv",
+  row.names = FALSE
+)
+write.csv(
+  unc_test_regression_ami_lasso_union_all,
+  "temp/cvd_methods_unc_test_regression_ami_lasso_union_all.csv",
+  row.names = FALSE
+)
+write.csv(
+  unc_test_regression_ami_fully_adjusted_FALSE,
+  "temp/cvd_methods_unc_test_regression_ami_fully_adjusted_FALSE.csv",
+  row.names = FALSE
+)
+write.csv(
+  unc_test_regression_ami_lasso_FALSE,
+  "temp/cvd_methods_unc_test_regression_ami_lasso_FALSE.csv",
+  row.names = FALSE
+)
+write.csv(
+  unc_test_regression_ami_lasso_X_FALSE,
+  "temp/cvd_methods_unc_test_regression_ami_lasso_X_FALSE.csv",
+  row.names = FALSE
+)
+write.csv(
+  unc_test_regression_ami_lasso_union_FALSE,
+  "temp/cvd_methods_unc_test_regression_ami_lasso_union_FALSE.csv",
+  row.names = FALSE
+)
+write.csv(
+  unc_test_regression_ami_fully_adjusted_TRUE,
+  "temp/cvd_methods_unc_test_regression_ami_fully_adjusted_TRUE.csv",
+  row.names = FALSE
+)
+write.csv(
+  unc_test_regression_ami_lasso_TRUE,
+  "temp/cvd_methods_unc_test_regression_ami_lasso_TRUE.csv",
+  row.names = FALSE
+)
+write.csv(
+  unc_test_regression_ami_lasso_X_TRUE,
+  "temp/cvd_methods_unc_test_regression_ami_lasso_X_TRUE.csv",
+  row.names = FALSE
+)
+write.csv(
+  unc_test_regression_ami_lasso_union_TRUE,
+  "temp/cvd_methods_unc_test_regression_ami_lasso_union_TRUE.csv",
+  row.names = FALSE
+)
+write.csv(
+  unc_test_regression_stroke_sahhs_fully_adjusted_all,
+  "temp/cvd_methods_unc_test_regression_stroke_sahhs_fully_adjusted_all.csv",
+  row.names = FALSE
+)
+write.csv(
+  unc_test_regression_stroke_sahhs_lasso_all,
+  "temp/cvd_methods_unc_test_regression_stroke_sahhs_lasso_all.csv",
+  row.names = FALSE
+)
+write.csv(
+  unc_test_regression_stroke_sahhs_lasso_X_all,
+  "temp/cvd_methods_unc_test_regression_stroke_sahhs_lasso_X_all.csv",
+  row.names = FALSE
+)
+write.csv(
+  unc_test_regression_stroke_sahhs_lasso_union_all,
+  "temp/cvd_methods_unc_test_regression_stroke_sahhs_lasso_union_all.csv",
+  row.names = FALSE
+)
+write.csv(
+  unc_test_regression_stroke_sahhs_fully_adjusted_FALSE,
+  "temp/cvd_methods_unc_test_regression_stroke_sahhs_fully_adjusted_FALSE.csv",
+  row.names = FALSE
+)
+write.csv(
+  unc_test_regression_stroke_sahhs_lasso_FALSE,
+  "temp/cvd_methods_unc_test_regression_stroke_sahhs_lasso_FALSE.csv",
+  row.names = FALSE
+)
+write.csv(
+  unc_test_regression_stroke_sahhs_lasso_X_FALSE,
+  "temp/cvd_methods_unc_test_regression_stroke_sahhs_lasso_X_FALSE.csv",
+  row.names = FALSE
+)
+write.csv(
+  unc_test_regression_stroke_sahhs_lasso_union_FALSE,
+  "temp/cvd_methods_unc_test_regression_stroke_sahhs_lasso_union_FALSE.csv",
+  row.names = FALSE
+)
+write.csv(
+  unc_test_regression_stroke_sahhs_fully_adjusted_TRUE,
+  "temp/cvd_methods_unc_test_regression_stroke_sahhs_fully_adjusted_TRUE.csv",
+  row.names = FALSE
+)
+write.csv(
+  unc_test_regression_stroke_sahhs_lasso_TRUE,
+  "temp/cvd_methods_unc_test_regression_stroke_sahhs_lasso_TRUE.csv",
+  row.names = FALSE
+)
+write.csv(
+  unc_test_regression_stroke_sahhs_lasso_X_TRUE,
+  "temp/cvd_methods_unc_test_regression_stroke_sahhs_lasso_X_TRUE.csv",
+  row.names = FALSE
+)
+write.csv(
+  unc_test_regression_stroke_sahhs_lasso_union_TRUE,
+  "temp/cvd_methods_unc_test_regression_stroke_sahhs_lasso_union_TRUE.csv",
+  row.names = FALSE
+)
+
 
 
 # variable selection models
@@ -1087,6 +1439,4 @@ write.csv(
   "temp/cvd_methods_stacked_variable_sets_stroke_sahhs.csv",
   row.names = FALSE
 )
-
-
 
