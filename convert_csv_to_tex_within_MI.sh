@@ -2,6 +2,9 @@
 
 
 # convert CSV's into TeX code
+python tably.py "temp/cvd_missingness_methods_within_MI_var_sets_ami.csv" -o "outputs/cvd_missingness_methods_within_MI_var_sets_ami.txt" -r
+python tably.py "temp/cvd_missingness_methods_within_MI_var_sets_stroke_sahhs.csv" -o "outputs/cvd_missingness_methods_within_MI_var_sets_stroke_sahhs.txt" -r
+
 python tably.py "temp/cvd_missingness_methods_within_MI_all_aggregate_var_selection.csv" -o "outputs/cvd_missingness_methods_within_MI_all_aggregate_var_selection.txt" -r
 python tably.py "temp/cvd_missingness_methods_within_MI_all_mean_var_selection.csv"      -o "outputs/cvd_missingness_methods_within_MI_all_mean_var_selection.txt"      -r
 
@@ -14,6 +17,9 @@ python tably.py "temp/cvd_missingness_methods_within_MI_all_cox_stroke_sahhs.csv
 
 
 # remove first 4 lines (tably header)
+sed -i 1,4d "outputs/cvd_missingness_methods_within_MI_var_sets_ami.txt"
+sed -i 1,4d "outputs/cvd_missingness_methods_within_MI_var_sets_stroke_sahhs.txt"
+
 sed -i 1,4d "outputs/cvd_missingness_methods_within_MI_all_aggregate_var_selection.txt"
 sed -i 1,4d "outputs/cvd_missingness_methods_within_MI_all_mean_var_selection.txt"
 
@@ -27,6 +33,12 @@ sed -i 1,4d "outputs/cvd_missingness_methods_within_MI_all_cox_stroke_sahhs.txt"
 
 
 # # remove last 2 lines (tably footer)
+sed -i '$d' "outputs/cvd_missingness_methods_within_MI_var_sets_ami.txt"
+sed -i '$d' "outputs/cvd_missingness_methods_within_MI_var_sets_ami.txt"
+
+sed -i '$d' "outputs/cvd_missingness_methods_within_MI_var_sets_stroke_sahhs.txt"
+sed -i '$d' "outputs/cvd_missingness_methods_within_MI_var_sets_stroke_sahhs.txt"
+
 sed -i '$d' "outputs/cvd_missingness_methods_within_MI_all_aggregate_var_selection.txt"
 sed -i '$d' "outputs/cvd_missingness_methods_within_MI_all_aggregate_var_selection.txt"
 sed -i '$d' "outputs/cvd_missingness_methods_within_MI_all_mean_var_selection.txt"

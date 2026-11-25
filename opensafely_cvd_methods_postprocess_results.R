@@ -461,6 +461,56 @@ stacked_variable_sets <- rbind(
 )
 
 
+# Variable selection sets post-processing --------------------------------------
+print("Variable selection sets post-processing")
+
+substrRight <- function(x, n){
+  substr(x, nchar(x)-n+1, nchar(x))
+}
+
+# 1: CHANGE AVAILABLE VARS TO 28 IN ALL CASES
+stacked_variable_sets$available_vars <- c(
+  28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28,
+  28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28
+)
+
+for (i in c(1:length(stacked_variable_sets$vars_list))) {
+  # 2: REMOVE ALL 3 EXPOSURES FROM VARS_LIST
+  stacked_variable_sets$vars_list[i] <- stringr::str_replace(
+    stacked_variable_sets$vars_list[i], "end_date_exposure;", ""
+  )
+  stacked_variable_sets$vars_list[i] <- stringr::str_replace(
+    stacked_variable_sets$vars_list[i], "end_date_exposure", ""
+  )
+  stacked_variable_sets$vars_list[i] <- stringr::str_replace(
+    stacked_variable_sets$vars_list[i], "cov_bin_covid;", ""
+  )
+  stacked_variable_sets$vars_list[i] <- stringr::str_replace(
+    stacked_variable_sets$vars_list[i], "cov_bin_covid", ""
+  )
+  stacked_variable_sets$vars_list[i] <- stringr::str_replace(
+    stacked_variable_sets$vars_list[i], "binary_covid19_exposure;", ""
+  )
+  stacked_variable_sets$vars_list[i] <- stringr::str_replace(
+    stacked_variable_sets$vars_list[i], "binary_covid19_exposure", ""
+  )
+  
+  # CHECK SEMICOLONS
+  if (substrRight(stacked_variable_sets$vars_list[i], 1) == ";") {
+    # do nothing
+  } else {
+    stacked_variable_sets$vars_list[i] <- paste0(
+      stacked_variable_sets$vars_list[i], ";"
+    )
+  }
+  
+  # 3: RECALCULATE SELECTED_VARS
+  new_selected_vars <- str_count(stacked_variable_sets$vars_list[i],';')
+  stacked_variable_sets$selected_vars[i] <- new_selected_vars
+  
+}
+
+
 # Exposure coefficients ami all models -----------------------------------------
 print("Exposure coefficients ami all models")
 

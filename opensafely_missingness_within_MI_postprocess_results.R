@@ -1035,17 +1035,402 @@ cvd_missingness_methods_within_MI_unc_test_conclusion <- cvd_missingness_methods
   dplyr::select(outcome, name, method, test_result, interpretation)
 
 
+# Variable selection sets post processing --------------------------------------
+print("Variable selection sets post processing")
+
+
+# helper functions
+
+substrRight <- function(x, n){
+  substr(x, nchar(x)-n+1, nchar(x))
+}
+
+get_cov_list <- function(df, selected_outcome, selected_subgroup, selected_method) {
+  
+  subset_df <- (df %>%
+                  dplyr::filter(outcome == selected_outcome) %>%
+                  dplyr::filter(subgroup == selected_subgroup) %>%
+                  dplyr::filter(method == selected_method)
+  )
+  
+  out_string <- paste(subset_df$covariates, collapse = ";")
+  
+  return (out_string)
+}
+
+fix_vars_list <- function(column) {
+  var_names <- c(
+    "cov_bin_ami", "cov_cat_age_group",
+    "cov_bin_sahhs", "cov_bin_covid", "cov_num_age", "cov_cat_sex", "cov_cat_ethnicity",
+    "cov_cat_imd", "cov_cat_smoking", "cov_bin_carehome", "cov_bin_hcworker", "cov_bin_dementia",
+    "cov_bin_liver_disease", "cov_bin_ckd", "cov_bin_cancer", "cov_bin_hypertension", "cov_bin_diabetes",
+    "cov_bin_obesity", "cov_bin_copd", "cov_bin_depression", "cov_bin_stroke_all", "cov_bin_other_ae",
+    "cov_bin_vte", "cov_bin_hf", "cov_bin_angina", "cov_bin_lipidmed", "cov_bin_antiplatelet",
+    "cov_bin_anticoagulant", "cov_bin_cocp", "cov_bin_hrt", "strat_cat_region",
+    "end_date_exposure", "binary_covid19_exposure", "cov_num_bmi"
+  )
+  
+  readable_var_names <- c(
+    "Acute MI", "Age",
+    "Subarachnoid haemorrhage / haemorrhage stroke", "Covid-19", "Age", "Sex", "Ethnicity",
+    "Index of multiple deprivation", "Smoking", "Carehome resident", "Healthcare worker", "Dementia",
+    "Liver disease", "Chronic kidney disease", "Cancer", "Hypertension", "Diabetes",
+    "Obesity", "Chronic obstructive pulmonary disease (COPD)", "Depression", "Stroke (all)", "Other AE",
+    "Venous thromboembolism events (VTE)", "HF", "Angina", "Lipid Med", "Antiplatelet Med",
+    "Anticoagulant Med", "Combined oral contraceptive pill (COCP)", "Hormone replacement therapy (HRT)", "Region",
+    "End Date Exposure", "Exposure Indicator", "BMI"
+  )
+  
+  for (i in c(1:nrow(column))) {
+    current_vars_list <- str_split(column[i, ], ";")[[1]]
+    
+    for (j in c(1:length(current_vars_list))) {
+      if (current_vars_list[j] %in% var_names) {
+        k <- which(var_names == current_vars_list[j])
+        current_vars_list[j] <- readable_var_names[k]
+      }
+    }
+    
+    readable_vars_list <- paste(current_vars_list, collapse = ", ")
+    column[i, ]        <- readable_vars_list
+  }
+  
+  return(column)
+}
+
+
+# split name into subgroup and outcome
+
+cvd_missingness_methods_within_MI_all_aggregate_var_selection$outcome <-
+  stringr::str_split_i(
+    cvd_missingness_methods_within_MI_all_aggregate_var_selection$name,
+    "-",
+    3
+)
+
+cvd_missingness_methods_within_MI_all_aggregate_var_selection$subgroup <-
+  stringr::str_split_i(
+    cvd_missingness_methods_within_MI_all_aggregate_var_selection$name,
+    "-",
+    2
+)
+
+cvd_missingness_methods_within_MI_all_aggregate_var_selection <- subset(
+  cvd_missingness_methods_within_MI_all_aggregate_var_selection,
+  select = c(outcome, subgroup, method, covariates)
+) %>% arrange(outcome, subgroup, method)
+
+
+# define new summary table
+
+cvd_missingness_methods_within_MI_var_sets_ami <- data.frame(
+  subgroup       = c(
+    "All", "All", "All", "All",
+    "Non-hospitalised COVID-19", "Non-hospitalised COVID-19", "Non-hospitalised COVID-19", "Non-hospitalised COVID-19",
+    "Hospitalised COVID-19", "Hospitalised COVID-19", "Hospitalised COVID-19", "Hospitalised COVID-19"
+  ),
+  method         = c(
+    "Fully-adjusted", "Lasso", "Exposure Lasso", "Union Lasso",
+    "Fully-adjusted", "Lasso", "Exposure Lasso", "Union Lasso",
+    "Fully-adjusted", "Lasso", "Exposure Lasso", "Union Lasso"
+  ),
+  available_vars = rep(28, length.out = 12),
+  selected_vars  = rep(0,  length.out = 12),
+  vars_list  = rep(NA,  length.out = 12)
+)
+
+
+# populate new table
+
+all_vars <- "cov_num_age;cov_cat_sex;cov_num_bmi;cov_cat_ethnicity;cov_cat_imd;cov_cat_smoking;cov_bin_carehome;cov_bin_hcworker;cov_bin_dementia;cov_bin_liver_disease;cov_bin_ckd;cov_bin_cancer;cov_bin_hypertension;cov_bin_diabetes;cov_bin_obesity;cov_bin_copd;cov_bin_depression;cov_bin_stroke_all;cov_bin_other_ae;cov_bin_vte;cov_bin_hf;cov_bin_angina;cov_bin_lipidmed;cov_bin_antiplatelet;cov_bin_anticoagulant;cov_bin_cocp;cov_bin_hrt;strat_cat_region;"
+
+cvd_missingness_methods_within_MI_var_sets_ami[1, "vars_list"] <- all_vars
+
+cvd_missingness_methods_within_MI_var_sets_ami[2, "vars_list"] <- get_cov_list(
+  cvd_missingness_methods_within_MI_all_aggregate_var_selection, "ami", "main", "lasso"
+)
+cvd_missingness_methods_within_MI_var_sets_ami[3, "vars_list"] <- get_cov_list(
+  cvd_missingness_methods_within_MI_all_aggregate_var_selection, "ami", "main", "lasso_X"
+)
+cvd_missingness_methods_within_MI_var_sets_ami[4, "vars_list"] <- get_cov_list(
+  cvd_missingness_methods_within_MI_all_aggregate_var_selection, "ami", "main", "lasso_union"
+)
+
+cvd_missingness_methods_within_MI_var_sets_ami[5, "vars_list"] <- all_vars
+
+cvd_missingness_methods_within_MI_var_sets_ami[6, "vars_list"] <- get_cov_list(
+  cvd_missingness_methods_within_MI_all_aggregate_var_selection, "ami", "sub_covidhospital_FALSE", "lasso"
+)
+cvd_missingness_methods_within_MI_var_sets_ami[7, "vars_list"] <- get_cov_list(
+  cvd_missingness_methods_within_MI_all_aggregate_var_selection, "ami", "sub_covidhospital_FALSE", "lasso_X"
+)
+cvd_missingness_methods_within_MI_var_sets_ami[8, "vars_list"] <- get_cov_list(
+  cvd_missingness_methods_within_MI_all_aggregate_var_selection, "ami", "sub_covidhospital_FALSE", "lasso_union"
+)
+
+cvd_missingness_methods_within_MI_var_sets_ami[9, "vars_list"] <- all_vars
+
+cvd_missingness_methods_within_MI_var_sets_ami[10, "vars_list"] <- get_cov_list(
+  cvd_missingness_methods_within_MI_all_aggregate_var_selection, "ami", "sub_covidhospital_TRUE", "lasso"
+)
+cvd_missingness_methods_within_MI_var_sets_ami[11, "vars_list"] <- get_cov_list(
+  cvd_missingness_methods_within_MI_all_aggregate_var_selection, "ami", "sub_covidhospital_TRUE", "lasso_X"
+)
+cvd_missingness_methods_within_MI_var_sets_ami[12, "vars_list"] <- get_cov_list(
+  cvd_missingness_methods_within_MI_all_aggregate_var_selection, "ami", "sub_covidhospital_TRUE", "lasso_union"
+)
+
+for (i in c(1:length(cvd_missingness_methods_within_MI_var_sets_ami$vars_list))) {
+  # 2: REMOVE ALL 3 EXPOSURES FROM VARS_LIST
+  cvd_missingness_methods_within_MI_var_sets_ami$vars_list[i] <- stringr::str_replace(
+    cvd_missingness_methods_within_MI_var_sets_ami$vars_list[i], "end_date_exposure;", ""
+  )
+  cvd_missingness_methods_within_MI_var_sets_ami$vars_list[i] <- stringr::str_replace(
+    cvd_missingness_methods_within_MI_var_sets_ami$vars_list[i], "end_date_exposure", ""
+  )
+  cvd_missingness_methods_within_MI_var_sets_ami$vars_list[i] <- stringr::str_replace(
+    cvd_missingness_methods_within_MI_var_sets_ami$vars_list[i], "cov_bin_covid;", ""
+  )
+  cvd_missingness_methods_within_MI_var_sets_ami$vars_list[i] <- stringr::str_replace(
+    cvd_missingness_methods_within_MI_var_sets_ami$vars_list[i], "cov_bin_covid", ""
+  )
+  cvd_missingness_methods_within_MI_var_sets_ami$vars_list[i] <- stringr::str_replace(
+    cvd_missingness_methods_within_MI_var_sets_ami$vars_list[i], "binary_covid19_exposure;", ""
+  )
+  cvd_missingness_methods_within_MI_var_sets_ami$vars_list[i] <- stringr::str_replace(
+    cvd_missingness_methods_within_MI_var_sets_ami$vars_list[i], "binary_covid19_exposure", ""
+  )
+  
+  # CHECK SEMICOLONS
+  if (substrRight(cvd_missingness_methods_within_MI_var_sets_ami$vars_list[i], 1) == ";") {
+    # do nothing
+  } else {
+    cvd_missingness_methods_within_MI_var_sets_ami$vars_list[i] <- paste0(
+      cvd_missingness_methods_within_MI_var_sets_ami$vars_list[i], ";"
+    )
+  }
+  
+  # 3: RECALCULATE SELECTED_VARS
+  new_selected_vars <- str_count(cvd_missingness_methods_within_MI_var_sets_ami$vars_list[i],';')
+  cvd_missingness_methods_within_MI_var_sets_ami$selected_vars[i] <- new_selected_vars
+  
+}
+
+cvd_missingness_methods_within_MI_var_sets_ami["vars_list"] <- fix_vars_list(
+  cvd_missingness_methods_within_MI_var_sets_ami["vars_list"]
+)
+
+# define new summary table
+
+cvd_missingness_methods_within_MI_var_sets_stroke_sahhs <- data.frame(
+  subgroup       = c(
+    "All", "All", "All", "All",
+    "Non-hospitalised COVID-19", "Non-hospitalised COVID-19", "Non-hospitalised COVID-19", "Non-hospitalised COVID-19",
+    "Hospitalised COVID-19", "Hospitalised COVID-19", "Hospitalised COVID-19", "Hospitalised COVID-19"
+  ),
+  method         = c(
+    "Fully-adjusted", "Lasso", "Exposure Lasso", "Union Lasso",
+    "Fully-adjusted", "Lasso", "Exposure Lasso", "Union Lasso",
+    "Fully-adjusted", "Lasso", "Exposure Lasso", "Union Lasso"
+  ),
+  available_vars = rep(28, length.out = 12),
+  selected_vars  = rep(0,  length.out = 12),
+  vars_list  = rep(NA,  length.out = 12)
+)
+
+
+# populate new table
+
+all_vars <- "cov_num_age;cov_cat_sex;cov_num_bmi;cov_cat_ethnicity;cov_cat_imd;cov_cat_smoking;cov_bin_carehome;cov_bin_hcworker;cov_bin_dementia;cov_bin_liver_disease;cov_bin_ckd;cov_bin_cancer;cov_bin_hypertension;cov_bin_diabetes;cov_bin_obesity;cov_bin_copd;cov_bin_depression;cov_bin_stroke_all;cov_bin_other_ae;cov_bin_vte;cov_bin_hf;cov_bin_angina;cov_bin_lipidmed;cov_bin_antiplatelet;cov_bin_anticoagulant;cov_bin_cocp;cov_bin_hrt;strat_cat_region;"
+
+cvd_missingness_methods_within_MI_var_sets_stroke_sahhs[1, "vars_list"] <- all_vars
+
+cvd_missingness_methods_within_MI_var_sets_stroke_sahhs[2, "vars_list"] <- get_cov_list(
+  cvd_missingness_methods_within_MI_all_aggregate_var_selection, "stroke_sahhs", "main", "lasso"
+)
+cvd_missingness_methods_within_MI_var_sets_stroke_sahhs[3, "vars_list"] <- get_cov_list(
+  cvd_missingness_methods_within_MI_all_aggregate_var_selection, "stroke_sahhs", "main", "lasso_X"
+)
+cvd_missingness_methods_within_MI_var_sets_stroke_sahhs[4, "vars_list"] <- get_cov_list(
+  cvd_missingness_methods_within_MI_all_aggregate_var_selection, "stroke_sahhs", "main", "lasso_union"
+)
+
+cvd_missingness_methods_within_MI_var_sets_stroke_sahhs[5, "vars_list"] <- all_vars
+
+cvd_missingness_methods_within_MI_var_sets_stroke_sahhs[6, "vars_list"] <- get_cov_list(
+  cvd_missingness_methods_within_MI_all_aggregate_var_selection, "stroke_sahhs", "sub_covidhospital_FALSE", "lasso"
+)
+cvd_missingness_methods_within_MI_var_sets_stroke_sahhs[7, "vars_list"] <- get_cov_list(
+  cvd_missingness_methods_within_MI_all_aggregate_var_selection, "stroke_sahhs", "sub_covidhospital_FALSE", "lasso_X"
+)
+cvd_missingness_methods_within_MI_var_sets_stroke_sahhs[8, "vars_list"] <- get_cov_list(
+  cvd_missingness_methods_within_MI_all_aggregate_var_selection, "stroke_sahhs", "sub_covidhospital_FALSE", "lasso_union"
+)
+
+cvd_missingness_methods_within_MI_var_sets_stroke_sahhs[9, "vars_list"] <- all_vars
+
+cvd_missingness_methods_within_MI_var_sets_stroke_sahhs[10, "vars_list"] <- get_cov_list(
+  cvd_missingness_methods_within_MI_all_aggregate_var_selection, "stroke_sahhs", "sub_covidhospital_TRUE", "lasso"
+)
+cvd_missingness_methods_within_MI_var_sets_stroke_sahhs[11, "vars_list"] <- get_cov_list(
+  cvd_missingness_methods_within_MI_all_aggregate_var_selection, "stroke_sahhs", "sub_covidhospital_TRUE", "lasso_X"
+)
+cvd_missingness_methods_within_MI_var_sets_stroke_sahhs[12, "vars_list"] <- get_cov_list(
+  cvd_missingness_methods_within_MI_all_aggregate_var_selection, "stroke_sahhs", "sub_covidhospital_TRUE", "lasso_union"
+)
+
+for (i in c(1:length(cvd_missingness_methods_within_MI_var_sets_stroke_sahhs$vars_list))) {
+  # 2: REMOVE ALL 3 EXPOSURES FROM VARS_LIST
+  cvd_missingness_methods_within_MI_var_sets_stroke_sahhs$vars_list[i] <- stringr::str_replace(
+    cvd_missingness_methods_within_MI_var_sets_stroke_sahhs$vars_list[i], "end_date_exposure;", ""
+  )
+  cvd_missingness_methods_within_MI_var_sets_stroke_sahhs$vars_list[i] <- stringr::str_replace(
+    cvd_missingness_methods_within_MI_var_sets_stroke_sahhs$vars_list[i], "end_date_exposure", ""
+  )
+  cvd_missingness_methods_within_MI_var_sets_stroke_sahhs$vars_list[i] <- stringr::str_replace(
+    cvd_missingness_methods_within_MI_var_sets_stroke_sahhs$vars_list[i], "cov_bin_covid;", ""
+  )
+  cvd_missingness_methods_within_MI_var_sets_stroke_sahhs$vars_list[i] <- stringr::str_replace(
+    cvd_missingness_methods_within_MI_var_sets_stroke_sahhs$vars_list[i], "cov_bin_covid", ""
+  )
+  cvd_missingness_methods_within_MI_var_sets_stroke_sahhs$vars_list[i] <- stringr::str_replace(
+    cvd_missingness_methods_within_MI_var_sets_stroke_sahhs$vars_list[i], "binary_covid19_exposure;", ""
+  )
+  cvd_missingness_methods_within_MI_var_sets_stroke_sahhs$vars_list[i] <- stringr::str_replace(
+    cvd_missingness_methods_within_MI_var_sets_stroke_sahhs$vars_list[i], "binary_covid19_exposure", ""
+  )
+  
+  # CHECK SEMICOLONS
+  if (substrRight(cvd_missingness_methods_within_MI_var_sets_stroke_sahhs$vars_list[i], 1) == ";") {
+    # do nothing
+  } else {
+    cvd_missingness_methods_within_MI_var_sets_stroke_sahhs$vars_list[i] <- paste0(
+      cvd_missingness_methods_within_MI_var_sets_stroke_sahhs$vars_list[i], ";"
+    )
+  }
+  
+  # 3: RECALCULATE SELECTED_VARS
+  new_selected_vars <- str_count(cvd_missingness_methods_within_MI_var_sets_stroke_sahhs$vars_list[i],';')
+  cvd_missingness_methods_within_MI_var_sets_stroke_sahhs$selected_vars[i] <- new_selected_vars
+  
+}
+
+cvd_missingness_methods_within_MI_var_sets_stroke_sahhs["vars_list"] <- fix_vars_list(
+  cvd_missingness_methods_within_MI_var_sets_stroke_sahhs["vars_list"]
+)# define new summary table
+
+cvd_missingness_methods_within_MI_var_sets_stroke_sahhs <- data.frame(
+  subgroup       = c(
+    "All", "All", "All", "All",
+    "Non-hospitalised COVID-19", "Non-hospitalised COVID-19", "Non-hospitalised COVID-19", "Non-hospitalised COVID-19",
+    "Hospitalised COVID-19", "Hospitalised COVID-19", "Hospitalised COVID-19", "Hospitalised COVID-19"
+  ),
+  method         = c(
+    "Fully-adjusted", "Lasso", "Exposure Lasso", "Union Lasso",
+    "Fully-adjusted", "Lasso", "Exposure Lasso", "Union Lasso",
+    "Fully-adjusted", "Lasso", "Exposure Lasso", "Union Lasso"
+  ),
+  available_vars = rep(28, length.out = 12),
+  selected_vars  = rep(0,  length.out = 12),
+  vars_list  = rep(NA,  length.out = 12)
+)
+
+
+# populate new table
+
+all_vars <- "cov_num_age;cov_cat_sex;cov_num_bmi;cov_cat_ethnicity;cov_cat_imd;cov_cat_smoking;cov_bin_carehome;cov_bin_hcworker;cov_bin_dementia;cov_bin_liver_disease;cov_bin_ckd;cov_bin_cancer;cov_bin_hypertension;cov_bin_diabetes;cov_bin_obesity;cov_bin_copd;cov_bin_depression;cov_bin_stroke_all;cov_bin_other_ae;cov_bin_vte;cov_bin_hf;cov_bin_angina;cov_bin_lipidmed;cov_bin_antiplatelet;cov_bin_anticoagulant;cov_bin_cocp;cov_bin_hrt;strat_cat_region;"
+
+cvd_missingness_methods_within_MI_var_sets_stroke_sahhs[1, "vars_list"] <- all_vars
+
+cvd_missingness_methods_within_MI_var_sets_stroke_sahhs[2, "vars_list"] <- get_cov_list(
+  cvd_missingness_methods_within_MI_all_aggregate_var_selection, "stroke_sahhs", "main", "lasso"
+)
+cvd_missingness_methods_within_MI_var_sets_stroke_sahhs[3, "vars_list"] <- get_cov_list(
+  cvd_missingness_methods_within_MI_all_aggregate_var_selection, "stroke_sahhs", "main", "lasso_X"
+)
+cvd_missingness_methods_within_MI_var_sets_stroke_sahhs[4, "vars_list"] <- get_cov_list(
+  cvd_missingness_methods_within_MI_all_aggregate_var_selection, "stroke_sahhs", "main", "lasso_union"
+)
+
+cvd_missingness_methods_within_MI_var_sets_stroke_sahhs[5, "vars_list"] <- all_vars
+
+cvd_missingness_methods_within_MI_var_sets_stroke_sahhs[6, "vars_list"] <- get_cov_list(
+  cvd_missingness_methods_within_MI_all_aggregate_var_selection, "stroke_sahhs", "sub_covidhospital_FALSE", "lasso"
+)
+cvd_missingness_methods_within_MI_var_sets_stroke_sahhs[7, "vars_list"] <- get_cov_list(
+  cvd_missingness_methods_within_MI_all_aggregate_var_selection, "stroke_sahhs", "sub_covidhospital_FALSE", "lasso_X"
+)
+cvd_missingness_methods_within_MI_var_sets_stroke_sahhs[8, "vars_list"] <- get_cov_list(
+  cvd_missingness_methods_within_MI_all_aggregate_var_selection, "stroke_sahhs", "sub_covidhospital_FALSE", "lasso_union"
+)
+
+cvd_missingness_methods_within_MI_var_sets_stroke_sahhs[9, "vars_list"] <- all_vars
+
+cvd_missingness_methods_within_MI_var_sets_stroke_sahhs[10, "vars_list"] <- get_cov_list(
+  cvd_missingness_methods_within_MI_all_aggregate_var_selection, "stroke_sahhs", "sub_covidhospital_TRUE", "lasso"
+)
+cvd_missingness_methods_within_MI_var_sets_stroke_sahhs[11, "vars_list"] <- get_cov_list(
+  cvd_missingness_methods_within_MI_all_aggregate_var_selection, "stroke_sahhs", "sub_covidhospital_TRUE", "lasso_X"
+)
+cvd_missingness_methods_within_MI_var_sets_stroke_sahhs[12, "vars_list"] <- get_cov_list(
+  cvd_missingness_methods_within_MI_all_aggregate_var_selection, "stroke_sahhs", "sub_covidhospital_TRUE", "lasso_union"
+)
+
+for (i in c(1:length(cvd_missingness_methods_within_MI_var_sets_stroke_sahhs$vars_list))) {
+  # 2: REMOVE ALL 3 EXPOSURES FROM VARS_LIST
+  cvd_missingness_methods_within_MI_var_sets_stroke_sahhs$vars_list[i] <- stringr::str_replace(
+    cvd_missingness_methods_within_MI_var_sets_stroke_sahhs$vars_list[i], "end_date_exposure;", ""
+  )
+  cvd_missingness_methods_within_MI_var_sets_stroke_sahhs$vars_list[i] <- stringr::str_replace(
+    cvd_missingness_methods_within_MI_var_sets_stroke_sahhs$vars_list[i], "end_date_exposure", ""
+  )
+  cvd_missingness_methods_within_MI_var_sets_stroke_sahhs$vars_list[i] <- stringr::str_replace(
+    cvd_missingness_methods_within_MI_var_sets_stroke_sahhs$vars_list[i], "cov_bin_covid;", ""
+  )
+  cvd_missingness_methods_within_MI_var_sets_stroke_sahhs$vars_list[i] <- stringr::str_replace(
+    cvd_missingness_methods_within_MI_var_sets_stroke_sahhs$vars_list[i], "cov_bin_covid", ""
+  )
+  cvd_missingness_methods_within_MI_var_sets_stroke_sahhs$vars_list[i] <- stringr::str_replace(
+    cvd_missingness_methods_within_MI_var_sets_stroke_sahhs$vars_list[i], "binary_covid19_exposure;", ""
+  )
+  cvd_missingness_methods_within_MI_var_sets_stroke_sahhs$vars_list[i] <- stringr::str_replace(
+    cvd_missingness_methods_within_MI_var_sets_stroke_sahhs$vars_list[i], "binary_covid19_exposure", ""
+  )
+  
+  # CHECK SEMICOLONS
+  if (substrRight(cvd_missingness_methods_within_MI_var_sets_stroke_sahhs$vars_list[i], 1) == ";") {
+    # do nothing
+  } else {
+    cvd_missingness_methods_within_MI_var_sets_stroke_sahhs$vars_list[i] <- paste0(
+      cvd_missingness_methods_within_MI_var_sets_stroke_sahhs$vars_list[i], ";"
+    )
+  }
+  
+  # 3: RECALCULATE SELECTED_VARS
+  new_selected_vars <- str_count(cvd_missingness_methods_within_MI_var_sets_stroke_sahhs$vars_list[i],';')
+  cvd_missingness_methods_within_MI_var_sets_stroke_sahhs$selected_vars[i] <- new_selected_vars
+  
+}
+
+cvd_missingness_methods_within_MI_var_sets_stroke_sahhs["vars_list"] <- fix_vars_list(
+  cvd_missingness_methods_within_MI_var_sets_stroke_sahhs["vars_list"]
+)
+
+
 # Save results -----------------------------------------------------------------
 print("Save results")
 
-# ggsave(
-#   "test.tiff",
-#   units="in",
-#   width=5,
-#   height=4,
-#   dpi=300,
-#   compression = 'lzw'
-# )
+write.csv(
+  cvd_missingness_methods_within_MI_var_sets_ami,
+  "temp/cvd_missingness_methods_within_MI_var_sets_ami.csv",
+  row.names = FALSE
+)
+
+write.csv(
+  cvd_missingness_methods_within_MI_var_sets_stroke_sahhs,
+  "temp/cvd_missingness_methods_within_MI_var_sets_stroke_sahhs.csv",
+  row.names = FALSE
+)
 
 write.csv(
   cvd_missingness_methods_within_MI_all_aggregate_var_selection,
